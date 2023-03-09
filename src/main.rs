@@ -59,7 +59,27 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .stop_location[0]
                 .id;
             let res = call_trip(&mut token, from_id, to_id)?;
-            println!("{:?}", res);
+            let first_trip = &res.trip_list.trips[0];
+            for leg in &first_trip.legs {
+                let actual_dep_time = match &leg.origin.rt_time {
+                    Some(actual_time) => format!(" ({})", actual_time),
+                    None => "".to_string(),
+                };
+                let actual_arr_time = match &leg.destination.rt_time {
+                    Some(actual_time) => format!(" ({})", actual_time),
+                    None => "".to_string(),
+                };
+                println!(
+                    "{} @ {}{} --[{}]--> {} @ {}{}",
+                    leg.origin.name.split(",").collect::<Vec<&str>>()[0],
+                    leg.origin.time,
+                    actual_dep_time,
+                    leg.name,
+                    leg.destination.name.split(",").collect::<Vec<&str>>()[0],
+                    leg.destination.time,
+                    actual_arr_time,
+                );
+            }
         }
     }
 
