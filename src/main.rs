@@ -5,6 +5,7 @@ use std::error::Error;
 use api::endpoints::{location_name::*, trip::call_trip};
 
 use clap::{Parser, Subcommand};
+use colored::Colorize;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -61,23 +62,72 @@ fn main() -> Result<(), Box<dyn Error>> {
             let res = call_trip(&mut token, from_id, to_id)?;
             let first_trip = &res.trip_list.trips[0];
             for leg in &first_trip.legs {
-                let actual_dep_time = match &leg.origin.rt_time {
-                    Some(actual_time) => format!(" ({})", actual_time),
+                // TODO: Should probably move this out into impl Leg
+                let fg_colour = match &leg.fg_color {
+                    Some(col) => {
+                        let col = &col[1..];
+                        let col = hex::decode(col)?;
+                        colored::Color::TrueColor {
+                            r: col[0],
+                            g: col[1],
+                            b: col[2],
+                        }
+                    }
+                    None => colored::Color::White,
+                };
+                let bg_colour = match &leg.bg_color {
+                    Some(col) => {
+                        let col = &col[1..];
+                        let col = hex::decode(col)?;
+                        colored::Color::TrueColor {
+                            r: col[0],
+                            g: col[1],
+                            b: col[2],
+                        }
+                    }
+                    None => colored::Color::Black,
+                };
+                let dep_time_str = match &leg.origin.rt_time {
+                    Some(actual_time) => {
+                        format!("{} {}", leg.origin.time.strikethrough(), actual_time.bold())
+                    }
+                    None => leg.origin.time.to_string(),
+                };
+                let arr_time_str = match &leg.destination.rt_time {
+                    Some(actual_time) => {
+                        format!(
+                            "{} {}",
+                            leg.destination.time.strikethrough(),
+                            actual_time.bold()
+                        )
+                    }
+                    None => leg.destination.time.to_string(),
+                };
+                let dep_track_str = match &leg.origin.track {
+                    Some(track) => match &leg.origin.rt_track {
+                        Some(actual_track) => format!("{} {}", track.strikethrough(), actual_track),
+                        None => format!("{}", track),
+                    },
                     None => "".to_string(),
                 };
-                let actual_arr_time = match &leg.destination.rt_time {
-                    Some(actual_time) => format!(" ({})", actual_time),
+                let arr_track_str = match &leg.destination.track {
+                    Some(track) => match &leg.destination.rt_track {
+                        Some(actual_track) => format!("{} {}", track.strikethrough(), actual_track),
+                        None => format!("{}", track),
+                    },
                     None => "".to_string(),
                 };
                 println!(
-                    "{} @ {}{} --[{}]--> {} @ {}{}",
+                    "{} {} @ {} --{}--> {} {} @ {}",
                     leg.origin.name.split(",").collect::<Vec<&str>>()[0],
-                    leg.origin.time,
-                    actual_dep_time,
-                    leg.name,
+                    dep_track_str,
+                    dep_time_str,
+                    format!("[{}]", leg.name)
+                        .color(fg_colour)
+                        .on_color(bg_colour),
                     leg.destination.name.split(",").collect::<Vec<&str>>()[0],
-                    leg.destination.time,
-                    actual_arr_time,
+                    arr_track_str,
+                    arr_time_str,
                 );
             }
         }
