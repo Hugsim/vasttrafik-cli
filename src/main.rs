@@ -6,7 +6,6 @@ use std::error::Error;
 use api::endpoints::{location_name::*, trip::call_trip};
 
 use clap::{Parser, Subcommand};
-use colored::{Color, Colorize};
 use log::info;
 
 #[derive(Parser, Debug)]

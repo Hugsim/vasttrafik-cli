@@ -4,10 +4,10 @@ use colored::{Color, Colorize};
 
 use crate::api::endpoints::trip::Leg;
 
-pub fn string_to_color(color: &str) -> colored::Color {
+pub fn string_to_color(color: &str) -> Color {
     let color = &color[1..];
     let color = hex::decode(color).expect("Error in parsing color!");
-    colored::Color::TrueColor {
+    Color::TrueColor {
         r: color[0],
         g: color[1],
         b: color[2],
@@ -69,13 +69,13 @@ impl fmt::Display for Leg {
 }
 
 impl Leg {
-    pub fn fg_color_or(&self, default: colored::Color) -> colored::Color {
+    pub fn fg_color_or(&self, default: Color) -> Color {
         match &self.fg_color {
             Some(fg_color) => string_to_color(fg_color),
             None => default,
         }
     }
-    pub fn bg_color_or(&self, default: colored::Color) -> colored::Color {
+    pub fn bg_color_or(&self, default: Color) -> Color {
         match &self.bg_color {
             Some(bg_color) => string_to_color(bg_color),
             None => default,
